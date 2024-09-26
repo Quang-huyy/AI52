@@ -40,6 +40,15 @@ population_initiale = population_initiale.astype(int)
 print(f'Taille de la population: {pop_size}')
 print(f'Population Initiale: \n{population_initiale}')
 
+def inverseIndividu(individual, S1, S2, valeur, poids):
+    while(S2 > capacite_max):
+        index = np.random.randint(0, individual.shape[0]-1)
+        while(individual[index]!=1):
+            index = np.random.randint(0, individual.shape[0])
+        individual[index] = 0
+        S1 = np.sum(individual*valeur)
+        S2 = np.sum(individual*poids)
+    return S1, S2
 
 def cal_fitness(poids, valeur, population, capacite):
     fitness = np.empty(population.shape[0])
@@ -48,10 +57,9 @@ def cal_fitness(poids, valeur, population, capacite):
         S1 = np.sum(population[i] * valeur)
         S2 = np.sum(population[i] * poids)
 
-        if S2 <= capacite:
-            fitness[i] = S1
-        else:
-            fitness[i] = capacite-S2
+        if S2 > capacite:
+            S1, S2 = inverseIndividu(population[i], S1, S2, valeur, poids)
+        fitness[i] = S1
 
     return fitness.astype(int)  
 

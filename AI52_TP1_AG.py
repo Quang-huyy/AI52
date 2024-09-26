@@ -9,7 +9,7 @@ import numpy as np #utilisation des calculs matriciels
 import random as rd #génération de nombres aléatoires
 from random import randint # génération des nombres aléatoires  
 import matplotlib.pyplot as plt
-
+import instances
 
 # Données du problème générées aléatoirement
 nombre_objets = 10   #Le nombre d'objets
@@ -19,9 +19,20 @@ capacite_max = 30    #La capacité du sac
 nbr_generations = 100 # nombre de générations
 
 
-ID_objets = np.arange(0, nombre_objets) #ID des objets à  mettre dans le sac de 1 à  10
-poids = np.random.randint(10, 20, size=nombre_objets) # Poids des objets générés aléatoirement entre 1kg et 15kg
-valeur = np.random.randint(50, 350, size=nombre_objets) # Valeurs des objets générées aléatoirement entre 50€ et 350€
+# instances.create_csv_files(nombre_objets, 1, 15, 50, 350)
+ID_objets, poids, valeur = np.array([]), np.array([]), np.array([]) 
+with open('instances/instance4.csv', mode='r', newline ='') as file:
+    for i, line in enumerate(file):
+        if i == 0:
+            continue
+        fields = line.strip().split(',')
+        ID_objets = np.append(ID_objets, int(fields[0]))
+        poids = np.append(poids, int(fields[1]))
+        valeur = np.append(valeur, int(fields[2]))
+
+ID_objets = ID_objets.astype(int)
+poids = poids.astype(int)
+valeur = valeur.astype(int)
 
 #affichage des objets: Une instance aléatoire du problème Knapsack
 print('La liste des objet est la suivante :')
@@ -57,9 +68,10 @@ def cal_fitness(poids, valeur, population, capacite):
         S1 = np.sum(population[i] * valeur)
         S2 = np.sum(population[i] * poids)
 
-        if S2 > capacite:
-            S1, S2 = inverseIndividu(population[i], S1, S2, valeur, poids)
-        fitness[i] = S1
+        if S2 <= capacite:
+            fitness[i] = S1
+        else:
+            fitness[i] = capacite-S2
 
     return fitness.astype(int)  
 

@@ -13,15 +13,15 @@ import instances
 
 # Données du problème générées aléatoirement
 nombre_objets = 10   #Le nombre d'objets
-capacite_max = 30    #La capacité du sac 
+capacite_max = 2000    #La capacité du portefeuille
 
 #paramètres de l'algorithme génétique
-nbr_generations = 100 # nombre de générations
+nbr_generations = 1000 # nombre de générations
 
 
 # instances.create_csv_files(nombre_objets, 1, 15, 50, 350)
 ID_objets, poids, valeur = np.array([]), np.array([]), np.array([]) 
-with open('instances/instance4.csv', mode='r', newline ='') as file:
+with open('instances/instance3.csv', mode='r', newline ='') as file:
     for i, line in enumerate(file):
         if i == 0:
             continue
@@ -45,8 +45,19 @@ print()
 # Créer la population initiale
 solutions_par_pop = 8 #la taille de la population 
 pop_size = (solutions_par_pop, ID_objets.shape[0])
-population_initiale = np.random.randint(2, size = pop_size)
-population_initiale = population_initiale.astype(int)
+
+max_budget_per_object = capacite_max*0.2        #calcul budget max pour chaque objet
+max_nbr_per_object = np.array([])
+population_initiale = np.full(pop_size, -1)
+max_nbr_per_object = [max_budget_per_object // poids[i] \
+                        for i in range(0, pop_size[1])]   #calcul nb max pour chaque objet
+for i in range(0, pop_size[0]):
+    individual = np.array([np.random.randint(max_nbr_per_object[j]) \
+                        for j in range(0, pop_size[1])]) #generation de la population init
+    
+    population_initiale[i] = individual 
+
+print(max_nbr_per_object)
 
 print(f'Taille de la population: {pop_size}')
 print(f'Population Initiale: \n{population_initiale}')
@@ -63,7 +74,7 @@ def inverseIndividu(individual, S1, S2, valeur, poids):
 
 def cal_fitness(poids, valeur, population, capacite):
     fitness = np.empty(population.shape[0])
-
+    poidsf = np.empty(population.shape[0])
     for i in range(population.shape[0]):
         S1 = np.sum(population[i] * valeur)
         S2 = np.sum(population[i] * poids)
@@ -72,7 +83,7 @@ def cal_fitness(poids, valeur, population, capacite):
             fitness[i] = S1
         else:
             fitness[i] = capacite-S2
-
+        poidsf[i] = S2
     return fitness.astype(int)  
 
 def selection(fitness, nbr_parents, population):
@@ -106,7 +117,7 @@ def croisement(parents, nbr_enfants):
 
     return enfants
 
-# La mutation consiste à  inverser le bit
+# La mutation consiste à changer le bit
 def mutation(enfants):
     mutants = np.empty((enfants.shape))
     taux_mutation = 0.5
@@ -115,11 +126,10 @@ def mutation(enfants):
         mutants[i,:] = enfants[i,:]
         if random_valeur > taux_mutation:
             continue
-        int_random_valeur = randint(0,enfants.shape[1]-1) #choisir aléatoirement le bit à inverser   
-        if mutants[i,int_random_valeur] == 0:
-            mutants[i,int_random_valeur] = 1
-        else:
-            mutants[i,int_random_valeur] = 0
+        #choisir aléatoirement le bit à changer
+        int_random_valeur = randint(0,enfants.shape[1]-1)    
+        value = np.random.randint(max_nbr_per_object[int_random_valeur])
+        mutants[i,int_random_valeur] = value
     return mutants  
 
 def optimize(poids, valeur, population, pop_size, nbr_generations, capacite):
@@ -151,15 +161,9 @@ sol_opt, historique_fitness = optimize(poids, valeur, population_initiale, pop_s
 #affichage du résultat
 print('La solution optimale est:')
 print('objets n°', [i for i, j in enumerate(sol_opt[0]) if j!=0])
+print('onts pris', [sol_opt[0][i] for i in range (0, len(sol_opt[0])) if sol_opt[0][i]!=0], 'fois')
 
-
-print(f'Avec une valeur de {np.amax(historique_fitness)} € et un poids de {np.sum(sol_opt * poids)} kg')
-print('Les objets qui maximisent la valeur contenue dans le sac sans le déchirer :')
-objets_selectionnes = ID_objets * sol_opt
-
-for i in range(objets_selectionnes.shape[1]):
-    if ((sol_opt[0][i]==1)): 
-        print(f'{objets_selectionnes[0][i]}')
+print(f"Avec un gain de {np.amax(historique_fitness)} € et un valeur d'achat de {np.sum(sol_opt * poids)} €")
 
 
 historique_fitness_moyenne = [np.mean(fitness) for fitness in historique_fitness]

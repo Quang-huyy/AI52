@@ -20,7 +20,7 @@ nbr_generations = 100 # nombre de générations
 
 
 ID_objets = np.arange(0, nombre_objets) #ID des objets à  mettre dans le sac de 1 à  10
-poids = np.random.randint(1, 15, size=nombre_objets) # Poids des objets générés aléatoirement entre 1kg et 15kg
+poids = np.random.randint(10, 20, size=nombre_objets) # Poids des objets générés aléatoirement entre 1kg et 15kg
 valeur = np.random.randint(50, 350, size=nombre_objets) # Valeurs des objets générées aléatoirement entre 50€ et 350€
 
 #affichage des objets: Une instance aléatoire du problème Knapsack
@@ -51,7 +51,7 @@ def cal_fitness(poids, valeur, population, capacite):
         if S2 <= capacite:
             fitness[i] = S1
         else:
-            fitness[i] = 0
+            fitness[i] = capacite-S2
 
     return fitness.astype(int)  
 

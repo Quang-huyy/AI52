@@ -13,15 +13,15 @@ import instances
 
 # Données du problème générées aléatoirement
 nombre_objets = 10   #Le nombre d'objets
-capacite_max = 2000    #La capacité du portefeuille
+capacite_max = 100    #La capacité du portefeuille
 
 #paramètres de l'algorithme génétique
-nbr_generations = 1000 # nombre de générations
+nbr_generations = 30 # nombre de générations
 
 
 # instances.create_csv_files(nombre_objets, 1, 15, 50, 350)
 ID_objets, poids, valeur = np.array([]), np.array([]), np.array([]) 
-with open('instances/instance3.csv', mode='r', newline ='') as file:
+with open('instances/instance2.csv', mode='r', newline ='') as file:
     for i, line in enumerate(file):
         if i == 0:
             continue
@@ -40,7 +40,6 @@ print('ID_objet   Poids   Valeur')
 for i in range(ID_objets.shape[0]):
     print(f'{ID_objets[i]} \t {poids[i]} \t {valeur[i]}')
 print()
-
 
 # Créer la population initiale
 solutions_par_pop = 8 #la taille de la population 
@@ -65,16 +64,15 @@ print(f'Population Initiale: \n{population_initiale}')
 def inverseIndividu(individual, S1, S2, valeur, poids):
     while(S2 > capacite_max):
         index = np.random.randint(0, individual.shape[0]-1)
-        while(individual[index]!=1):
-            index = np.random.randint(0, individual.shape[0])
-        individual[index] = 0
-        S1 = np.sum(individual*valeur)
-        S2 = np.sum(individual*poids)
+        for i in range (individual.shape[0]):
+            if individual[i]!= 0:    
+                individual[i] -= 1
+                S1 = np.sum(individual*valeur)
+                S2 = np.sum(individual*poids)
     return S1, S2
 
 def cal_fitness(poids, valeur, population, capacite):
     fitness = np.empty(population.shape[0])
-    poidsf = np.empty(population.shape[0])
     for i in range(population.shape[0]):
         S1 = np.sum(population[i] * valeur)
         S2 = np.sum(population[i] * poids)
@@ -83,7 +81,6 @@ def cal_fitness(poids, valeur, population, capacite):
             fitness[i] = S1
         else:
             fitness[i] = capacite-S2
-        poidsf[i] = S2
     return fitness.astype(int)  
 
 def selection(fitness, nbr_parents, population):
@@ -99,10 +96,13 @@ def selection(fitness, nbr_parents, population):
 
 def croisement(parents, nbr_enfants):
     enfants = np.empty((nbr_enfants, parents.shape[1]))
-    point_de_croisement = int(parents.shape[1]/2) #croisement au milieu
+    #croisement en 2 points
+    point_de_croisement1 , point_de_croisement2 = np.random.randint(parents.shape[1]), np.random.randint(parents.shape[1]) #croisement au milieu
+    # échanger valeur si p1 > p2
+    if point_de_croisement1 > point_de_croisement2:
+        point_de_croisement1, point_de_croisement2 = point_de_croisement2, point_de_croisement1
     taux_de_croisement = 0.8
     i = 0
-
     while (i < nbr_enfants): #parents.shape[0]
         indice_parent1 = i%parents.shape[0]
         indice_parent2 = (i+1)%parents.shape[0]
@@ -111,8 +111,9 @@ def croisement(parents, nbr_enfants):
             continue
         indice_parent1 = i%parents.shape[0]
         indice_parent2 = (i+1)%parents.shape[0]
-        enfants[i,0:point_de_croisement] = parents[indice_parent1,0:point_de_croisement]
-        enfants[i,point_de_croisement:] = parents[indice_parent2,point_de_croisement:]
+        enfants[i,0:point_de_croisement1] = parents[indice_parent1,0:point_de_croisement1]
+        enfants[i,point_de_croisement1:point_de_croisement2] = parents[indice_parent2,point_de_croisement1:point_de_croisement2]
+        enfants[i, point_de_croisement2:] = parents[i, point_de_croisement2:]
         i+=1
 
     return enfants
